@@ -1,0 +1,6 @@
+runs
+checkpoints
+dataset
+*.egg-info
+__pycache__
+wandb

@@ -1,0 +1,7 @@
+Prompt: <|im_start|>system
+You are a helpful assistant.<|im_end|>
+<|im_start|>user
+<|vision_start|><|image_pad|><|vision_end|>Please carefully check the image and detect the object this sentence describes: "The car is on the left side of the horse".<|im_end|>
+<|im_start|>assistant
+
+Completion: The "the car is on the left side of the horse" refers to <|VRT_122|><|VRT_107|><|VRT_138|><|VRT_256|><|VRT_135|> in this image.<|im_end|>
