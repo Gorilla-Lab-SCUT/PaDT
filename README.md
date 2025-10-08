@@ -1,4 +1,4 @@
-# Patch-as-Decodable-Token: Towards Unified Multi-Modal Vision Tasks in MLLMs
+<div align='center'><h1>Patch-as-Decodable-Token: Towards Unified Multi-Modal Vision Tasks in MLLMs</h1></div>
 
 <font size=4><div align='center'>[[🔗 Released Code](https://github.com/Gorilla-Lab-SCUT/PaDT)]
  [[🤗 Datasets](https://huggingface.co/collections/PaDT-MLLM/padt-dataset-68e400440ffb8c8f95e5ee20)] [[🤗 Checkpoints](https://huggingface.co/collections/PaDT-MLLM/padt-68e3f5c22e8ecbd6d0d13d43)]</div></font>
@@ -9,7 +9,7 @@
 <p>Figure A. PaDT pipeline.</p>
 </div>
 
-# 🌟 Introduction
+## 🌟 Introduction
 
 We are pleased to introduce **Patch-as-Decodable Token (PaDT)**, a unified paradigm that enables multimodal large language models (MLLMs) to directly generate both textual and visual outputs.
 
@@ -38,7 +38,7 @@ We hope this work will inspire further exploration in the community:
 <p>Figure C. PaDT works on four visual perception and understanding tasks.</p>
 </div>
 
-# Quick Start
+## Quick Start
 
 Clone this repo, and set up the environment with a few commands.
 
@@ -122,7 +122,7 @@ with torch.inference_mode():
     print(f"\npred_bboxes: {decoded_list['pred_boxes']},\npred_scores: {decoded_list['pred_score'].sigmoid()}\n")
 ```
 
-# Models
+## Models
 
 - PaDT_OVD: Trained on COCO2017 training set.
 - PaDT_REC: Trained on RefCOCO/+/g training set.
@@ -141,7 +141,7 @@ with torch.inference_mode():
 | PaDT_Pro_7B | Qwen2.5VL-7B | [PaDT-MLLM/PaDT_Pro_7B](https://huggingface.co/PaDT-MLLM/PaDT_Pro_7B) | ALL |
 
 
-# Showcase
+## Showcase
 
 Here are some randomly selected test examples showcasing PaDT’s excellent performance.
 
@@ -164,7 +164,7 @@ Here are some randomly selected test examples showcasing PaDT’s excellent perf
 </div>
 
 
-# Training Instruction
+## Training Instruction
 
 Download Datasets:
 
@@ -218,15 +218,15 @@ For example: Train the PaDT-Pro 3B model on a single node with 8×96 GB GPUs.
 bash ./run_scripts/padt_pro_3b_sft.sh
 ```
 
-# Evaluation
+## Evaluation
 
 We provide a simple inference example in `eval/test_demo.py`. More evaluation scripts will be added soon.
 
-# License Agreement
+## License Agreement
 
 PaDT is licensed under Apache 2.0.
 
-# Citation
+## Citation
 
 We kindly encourage citation of our work if you find it useful.
 
