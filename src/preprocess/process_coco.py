@@ -193,6 +193,7 @@ def filter_coco_annotations_with_api(input_json_path, output_filtered_json, max_
 
 
 if __name__ == '__main__':
+    os.makedirs('../../dataset/coco/processed', exist_ok=True)
     # create validation set
     input_coco_json = '../../dataset/coco/annotations/instances_val2017.json'
     output_filtered_json = '../../dataset/coco/processed/instances_val2017.json'

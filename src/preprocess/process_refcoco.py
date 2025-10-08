@@ -10,7 +10,7 @@ from copy import deepcopy
 import cv2
 import json
 
-
+os.makedirs('../../dataset/RefCOCO/processed', exist_ok=True)
 data_path = "../../dataset/RefCOCO"
 output_json = '../../dataset/RefCOCO/processed/{ds}_{split}.json'
 

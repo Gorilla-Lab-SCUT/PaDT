@@ -51,7 +51,7 @@ conda activate PaDT
 bash setup.sh
 ```
 
-The following contains a code snippet illustrating how to use our PaDT. More details can refer to [eval/test_demo.py](eval/test_demo.py).
+The following contains a code snippet illustrating how to use our PaDT.
 
 ```python
 import torch
@@ -73,7 +73,7 @@ processor = VisonTextProcessingClass(processor, model.config.vision_config.spati
 processor.prepare(model.model.embed_tokens.weight.shape[0])
 
 # question prompt
-PROMPT = """Please carefully check the image and detect the object this sentence describes: "The car is on the left side of the horse"."""
+PROMPT = "Please describe this image."
 
 # construct conversation
 message = [
@@ -162,65 +162,6 @@ Here are some randomly selected test examples showcasing PaDT’s excellent perf
 <div align="center">
 <img src="./assets/TAM.webp" width="900"/>
 </div>
-
-
-# Training Instruction
-
-Download Datasets:
-
-- [COCO](https://cocodataset.org/#home)
-
-- RefCOCO/+/g
-    ```bash
-    wget https://web.archive.org/web/20220413011718/https://bvisionweb1.cs.unc.edu/licheng/referit/data/refcoco.zip
-    wget https://web.archive.org/web/20220413011656/https://bvisionweb1.cs.unc.edu/licheng/referit/data/refcoco+.zip
-    wget https://web.archive.org/web/20220413012904/https://bvisionweb1.cs.unc.edu/licheng/referit/data/refcocog.zip
-    ```
-
-Unpack these datasets and place them under the following directory:
-
-```
-PaDT/
- ├── dataset/
- │    ├── coco/
- │    │     ├── annotations/
- │    │     ├── train2014/
- │    │     ├── train2017/
- │    │     ├── val2014/
- │    │     └── val2017/
- │    └── RefCOCO/
- │          ├── refcoco/
- │          ├── refcoco+/
- │          └── refcocog/
-```
-
-Preprocess the datasets:
-- 1. Preprocess via our scripts. (Please first update the dataset path configuration in the preprocessing scripts)
-    ```bash
-    cd src/preprocess
-    python process_coco.py
-    python process_refcoco.py
-    ```
-- 2. We also released the preprocessed datasets which are ready to use for training in huggingface.
-
-    | Dataset | Dataset Path | Task Type |
-    | - | - | -|
-    | COCO | [PaDT-MLLM/COCO](https://huggingface.co/datasets/PaDT-MLLM/COCO) | Open Vocabulary Detection |
-    | RefCOCO | [PaDT-MLLM/RefCOCO](https://huggingface.co/datasets/PaDT-MLLM/RefCOCO) | Referring Expression Comprehension/Segmentation |
-    | RIC | [PaDT-MLLM/ReferringImageCaptioning](https://huggingface.co/datasets/PaDT-MLLM/ReferringImageCaptioning) | Referring Image Captioning |
-
-
-The training scripts in `run_scripts` are ready to execute.
-
-For example: Train the PaDT-Pro 3B model on a single node with 8×96 GB GPUs.
-
-```bash
-bash ./run_scripts/padt_pro_3b_sft.sh
-```
-
-# Evaluation
-
-We provide a simple inference example in `eval/test_demo.py`. More evaluation scripts will be added soon.
 
 # License Agreement
 

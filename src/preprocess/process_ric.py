@@ -160,6 +160,7 @@ def prepare_ric_annotations_with_api(input_json_path, output_filtered_json):
 
 
 if __name__ == '__main__':
+    os.makedirs('../../dataset/ReferringImageCaptioning/processed', exist_ok=True)
     input_coco_json = '../../dataset/ReferringImageCaptioning/annotations/ric_instances_val2017.json'
     output_filtered_json = '../../dataset/ReferringImageCaptioning/processed/ric_instances_val2017.json'
     prepare_ric_annotations_with_api(input_coco_json, output_filtered_json)
