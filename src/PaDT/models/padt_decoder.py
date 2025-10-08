@@ -8,7 +8,7 @@ import torch.nn as nn
 from transformers.models.qwen2_5_vl.modeling_qwen2_5_vl import apply_rotary_emb, Qwen2RMSNorm, flash_attn_varlen_func
 
 
-class QwenDecoderFlashAttention2(nn.Module):
+class PaDTDecoderFlashAttention2(nn.Module):
     def __init__(self, dim: int, num_heads: int = 16) -> None:
         super().__init__()
         self.num_heads = num_heads
@@ -60,12 +60,12 @@ class QwenDecoderFlashAttention2(nn.Module):
         return attn_output
 
 
-QwenDecoder_VISION_ATTENTION_CLASSES = {
-    "flash_attention_2": QwenDecoderFlashAttention2,
+PaDTDecoder_VISION_ATTENTION_CLASSES = {
+    "flash_attention_2": PaDTDecoderFlashAttention2,
 }
 
 
-class QwenDecoderBlock(nn.Module):
+class PaDTDecoderBlock(nn.Module):
     def __init__(self, config, attn_implementation: str = "sdpa", update_memory: bool = False) -> None:
         super().__init__()
         self.norm1 = Qwen2RMSNorm(config['hidden_size'], eps=1e-6)
@@ -73,10 +73,10 @@ class QwenDecoderBlock(nn.Module):
         self.norm3 = Qwen2RMSNorm(config['hidden_size'], eps=1e-6)
         self.norm4 = Qwen2RMSNorm(config['hidden_size'], eps=1e-6)
 
-        self.self_attn = QwenDecoder_VISION_ATTENTION_CLASSES[attn_implementation](
+        self.self_attn = PaDTDecoder_VISION_ATTENTION_CLASSES[attn_implementation](
             config['hidden_size'], num_heads=config['num_heads']
         )
-        self.cross_attn_query_to_image = QwenDecoder_VISION_ATTENTION_CLASSES[attn_implementation](
+        self.cross_attn_query_to_image = PaDTDecoder_VISION_ATTENTION_CLASSES[attn_implementation](
             config['hidden_size'], num_heads=config['num_heads']
         )
         self.mlp = nn.Sequential(
@@ -86,7 +86,7 @@ class QwenDecoderBlock(nn.Module):
         )
         self.update_memory = update_memory
         if update_memory:
-            self.cross_attn_image_to_query = QwenDecoder_VISION_ATTENTION_CLASSES[attn_implementation](
+            self.cross_attn_image_to_query = PaDTDecoder_VISION_ATTENTION_CLASSES[attn_implementation](
                 config['hidden_size'], num_heads=config['num_heads']
             )
             self.norm5 = Qwen2RMSNorm(config['hidden_size'], eps=1e-6)
@@ -148,9 +148,9 @@ class PaDTDecoder(nn.Module):
 
         self.spatial_merge_size = config['spatial_merge_size']
         
-        self.low_res_transformer = QwenDecoderBlock(config, config['attn_implementation'], update_memory=True)
-        self.high_res_transformer1 = QwenDecoderBlock(config, config['attn_implementation'], update_memory=True)
-        self.high_res_transformer2 = QwenDecoderBlock(config, config['attn_implementation'], update_memory=True)
+        self.low_res_transformer = PaDTDecoderBlock(config, config['attn_implementation'], update_memory=True)
+        self.high_res_transformer1 = PaDTDecoderBlock(config, config['attn_implementation'], update_memory=True)
+        self.high_res_transformer2 = PaDTDecoderBlock(config, config['attn_implementation'], update_memory=True)
 
 
         self.high_res_norm = Qwen2RMSNorm(config['hidden_size'])
