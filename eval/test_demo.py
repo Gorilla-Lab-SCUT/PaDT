@@ -60,10 +60,21 @@ if __name__ == "__main__":
 
     text = processor.apply_chat_template(message, tokenize=False, add_generation_prompt=True)
     image_inputs, video_inputs = process_vision_info(message)
+    
+    # Inference Tip: As COCO training images typically have a maximum side length of 640 (~644 = 28 * 23) pixels, 
+    # the visual reference tokens in PaDT MLLM remain unaffected, but the decoder may be sensitive to larger scales. 
+    # We suggest resizing inputs to a maximum side length of 644 pixels for optimal inference results.
+    MAX_SIDE = 644
+    new_image_inputs = []
+    for image in image_inputs:
+        im_w, im_h = image.size
+        scale = MAX_SIDE / max(im_w, im_h)
+        new_w, new_h = int(im_w * scale), int(im_h * scale)
+        new_image_inputs.append(image.resize((new_w, new_h), Image.Resampling.LANCZOS))
 
     prompt_inputs = processor(
         text=[text],
-        images=image_inputs,
+        images=new_image_inputs,
         padding=True,
         padding_side="left",
         return_tensors="pt",
@@ -103,10 +114,15 @@ if __name__ == "__main__":
 
     # draw figure
     image = cv2.imread(TEST_IMG_PATH)
+    im_h, im_w = image.shape[:2]
+    MAX_SIDE = 644
+    scale = MAX_SIDE / max(im_w, im_h)
+    im_w, im_h = int(im_w * scale), int(im_h * scale)
+    image = cv2.resize(image, (im_w, im_h))
+
     vrt_seg = np.zeros_like(image)
     mask_seg = np.zeros_like(image)
 
-    im_h, im_w = vrt_seg.shape[:2]
     resized_h, resized_w = round(im_h / 28) * 28, round(im_w / 28) * 28
     patch_h, patch_w = round(im_h / 28), round(im_w / 28)
     vrt_seg = cv2.resize(vrt_seg, (resized_w, resized_h))
@@ -128,8 +144,7 @@ if __name__ == "__main__":
         # predbox: [cx, cy, w, h] -> [x, y, w, h], value: [0, 1]
         eval_box = (max(box[0].item() - box[2].item() / 2, 0), max(box[1].item() - box[3].item() / 2, 0), min(box[2].item(), 1), min(box[3].item(), 1))
         # scale 0~1 to 0~H/W
-        w, h = image_inputs[sample_idx].size
-        eval_box = (round(eval_box[0] * w), round(eval_box[1] * h), round(eval_box[2] * w), round(eval_box[3] * h))
+        eval_box = (round(eval_box[0] * resized_w), round(eval_box[1] * resized_h), round(eval_box[2] * resized_w), round(eval_box[3] * resized_h))
         cv2.rectangle(image, (eval_box[0], eval_box[1]), (eval_box[0] + eval_box[2], eval_box[1] + eval_box[3]), (0, 0, 255), 2)
         # draw box label
         (text_width, text_height), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)
@@ -139,11 +154,11 @@ if __name__ == "__main__":
         else:
             text_start_point = eval_box[1]
             end_point = eval_box[1]
-        image = cv2.rectangle(image, (round(max(eval_box[0], 0)), round(min(text_start_point - text_height - 5, h))), (round(max(eval_box[0] + text_width + 5, 0)), round(min(end_point, h))), (64, 64, 255), -1)
+        image = cv2.rectangle(image, (round(max(eval_box[0], 0)), round(min(text_start_point - text_height - 5, resized_h))), (round(max(eval_box[0] + text_width + 5, 0)), round(min(end_point, resized_h))), (64, 64, 255), -1)
         image = cv2.putText(image, label, (round(eval_box[0]), round(text_start_point - baseline)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 1, cv2.LINE_AA)
 
         ## mask
-        mask = (torch.nn.functional.interpolate(mask[None, None, :mask_hw[0] * 4, :mask_hw[1] * 4], size=(h, w), mode='bilinear')[0, 0].sigmoid() > 0.5).cpu().numpy()
+        mask = (torch.nn.functional.interpolate(mask[None, None, :mask_hw[0] * 4, :mask_hw[1] * 4], size=(resized_h, resized_w), mode='bilinear')[0, 0].sigmoid() > 0.5).cpu().numpy()
         color = colors[idx % 5]
         mask_seg[mask] = color
         mask = mask.astype(np.uint8)
