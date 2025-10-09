@@ -19,11 +19,23 @@ By introducing VRTs, we achieve **semantic reasoning and object-specific visual 
 
 As illustrated in Figure C, we have validated PaDT across four major visual perception and understanding tasks. In all cases, PaDT achieves **state-of-the-art** performance compared to conventional character-by-character coordinate-generation MLLMs.
 
-We hope this work will inspire further exploration in the community:
+### Why PaDT Succeeds?
+
+The success of PaDT stems from its deep insight into the visual capability bottlenecks of MLLMs.
+
+1. **Native Vision-Language Alignment**: Instead of “fitting” vision into text space, PaDT directly treats visual patches as decodable tokens, achieving seamless modality alignment.
+
+2. **Dynamic Visual Binding**: A dynamic embedding mechanism tightly binds Visual Reference Tokens (VRTs) to each image, preventing cross-image confusion.
+
+3. **Unified Token Space**: Enables the LLM to handle language and vision uniformly, simplifying training and improving consistency.
+
+4. **Lightweight Decoder**: Decouples dense prediction from the LLM, preserving its semantic reasoning while adding precise spatial output capability.
+
+5. **Strong Multi-Task Generalization**: The PaDT Pro model, jointly trained on REC/RES/OVD/RIC, can switch tasks via prompts and outperforms single-task models.
+
+We hope this work will **inspire further exploration** in the community:
 
 - What does true multimodal reasoning look like?
-
-- How can textual and visual elements be generated together in an MLLM output sequence?
 
 - And is a purely text-based output ever sufficient for visual reasoning?
 
