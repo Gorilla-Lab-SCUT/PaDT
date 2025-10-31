@@ -50,6 +50,10 @@ We hope this work will **inspire further exploration** in the community:
 <p>Figure C. PaDT works on four visual perception and understanding tasks.</p>
 </div>
 
+## Update
+
+- 2025.10.31: Evaluation scripts are updating (OVD on COCO validation set has updated.) [Here](#evaluation)
+
 ## Quick Start
 
 Clone this repo, and set up the environment with a few commands.
@@ -233,6 +237,20 @@ bash ./run_scripts/padt_pro_3b_sft.sh
 ## Evaluation
 
 We provide a simple inference example in `eval/test_demo.py`. More evaluation scripts will be added soon.
+
+- OVD Results on COCO 2017 validation set:
+
+    ```bash
+    cd eval/evaluation_scripts
+    bash ./eval_coco.sh
+    ```
+
+- REC result on RefCOCO/+/g val/test sets:
+
+    ```
+    Coming soon.
+    ```
+
 
 ## License Agreement
 
