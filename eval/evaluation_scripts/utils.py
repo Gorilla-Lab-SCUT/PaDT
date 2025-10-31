@@ -173,7 +173,7 @@ def unwrap_model_for_generation(
         unwrapped_model.gradient_checkpointing_enable()
 
 
-def inference_dataset(
+def infer_dataset(
     model, dataset, processor, accelerator, output_dir, batch_size=1, datasetname='coco', suffix='', sample_num=500, seed=42
 ):
     random.seed(seed)

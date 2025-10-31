@@ -1,17 +1,12 @@
 import re
 import os
-import PIL
-import math
 import json
 import torch
 import torch.distributed as dist
-import random
 import deepspeed
-import numpy as np
-from copy import deepcopy
 from datasets import load_dataset, Dataset
-from utils import load_model, inference_dataset
-from PaDT import VisonTextProcessingClass, parseVRTintoCompletion
+from utils import load_model, infer_dataset
+from PaDT import VisonTextProcessingClass
 
 
 def setup_distributed():
@@ -104,7 +99,7 @@ if __name__ == "__main__":
         model_embed_token_size = model.model.embed_tokens.weight.shape[0]
     processor.prepare(model_embed_token_size)
 
-    inference_dataset(
+    infer_dataset(
         model=model,
         dataset=dataset,
         processor=processor,
