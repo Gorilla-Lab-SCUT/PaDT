@@ -16,7 +16,7 @@ if __name__ == "__main__":
     else:
         suffix = 'padt_pro_3b'
 
-    output_dir = '../logs'  # Add the output directory, default is logs
+    output_dir = '../outputs/coco'  # Add the output directory, default is logs
 
     log_result_paths = [os.path.join(output_dir, f'coco_{i}_pred_results_{suffix}.json') for i in range(8)]
 

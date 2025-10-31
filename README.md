@@ -52,7 +52,7 @@ We hope this work will **inspire further exploration** in the community:
 
 ## Update
 
-- 2025.10.31: Evaluation scripts are updating (OVD on COCO validation set has updated.) [Here](#evaluation)
+- 2025.10.31: Evaluation scripts are updating (OVD on COCO2017 done, REC/RES on RefCOCO done.) [Here](#evaluation)
 
 ## Quick Start
 
@@ -238,17 +238,18 @@ bash ./run_scripts/padt_pro_3b_sft.sh
 
 We provide a simple inference example in `eval/test_demo.py`. More evaluation scripts will be added soon.
 
-- OVD Results on COCO 2017 validation set:
+- OVD results on COCO 2017 validation set:
 
     ```bash
     cd eval/evaluation_scripts
     bash ./eval_coco.sh
     ```
 
-- REC result on RefCOCO/+/g val/test sets:
+- REC results on RefCOCO/+/g val/test sets:
 
-    ```
-    Coming soon.
+    ```bash
+    cd eval/evaluation_scripts
+    bash ./eval_refcoco.sh
     ```
 
 

@@ -1,10 +1,16 @@
 import os
+import PIL
+import math
+import json
 import torch
+import random
 import itertools
 import deepspeed
+import numpy as np
 from copy import deepcopy
 from packaging import version
 from contextlib import contextmanager
+from pycocotools import mask as cocomask
 from transformers import AutoConfig, AutoProcessor
 from accelerate import Accelerator, DeepSpeedPlugin
 from transformers.integrations.deepspeed import HfTrainerDeepSpeedConfig
@@ -165,3 +171,97 @@ def unwrap_model_for_generation(
         yield unwrapped_model
     if is_gradient_checkpointing:
         unwrapped_model.gradient_checkpointing_enable()
+
+
+def inference_dataset(
+    model, dataset, processor, accelerator, output_dir, batch_size=1, datasetname='coco', suffix='', sample_num=500, seed=42
+):
+    random.seed(seed)
+
+    all_number = math.ceil(len(dataset) / (accelerator.num_processes * batch_size)) * accelerator.num_processes * batch_size
+    sub_dataset_idx = range(accelerator.process_index * batch_size, all_number, accelerator.num_processes * batch_size)
+
+    with open(os.path.join(output_dir, f'{datasetname}_{accelerator.process_index}_pred_results_{suffix}.json'), 'w+') as f:
+        f.write('')
+
+    with open(os.path.join(output_dir, f'{datasetname}_{accelerator.process_index}_pred_comp_{suffix}.json'), 'w+') as f:
+        f.write('')
+
+    for idx in sub_dataset_idx:
+        if int(os.getenv('LOCAL_RANK')) == 0:
+            print(f"Processing {idx}... | Total: {len(dataset)}")
+        
+        with torch.no_grad():
+            with unwrap_model_for_generation(model, accelerator) as unwrapped_model:
+                if idx < len(dataset):
+                    input_ = dataset[idx: idx+batch_size]
+
+                    prompts_text = processor.apply_chat_template(input_['prompt'], tokenize=False, add_generation_prompt=True)
+
+                    imgs = [PIL.Image.open(p) for sample in input_['image_path'] for p in sample]
+                    
+                    images = []
+                    for img in imgs:
+                        try:
+                            # Ensure minimum dimensions of 28 pixels
+                            w, h = img.size
+                            if w < 28 or h < 28:
+                            # Calculate new dimensions maintaining aspect ratio
+                                if w < h:
+                                    new_w = 28
+                                    new_h = int(h * (28/w))
+                                else:
+                                    new_h = 28
+                                    new_w = int(w * (28/h))
+                            img = img.resize((new_w, new_h), PIL.Image.Resampling.LANCZOS)
+                        except:
+                            pass
+                        images.append(img)
+                    
+                    prompt_inputs = processor(
+                        text=prompts_text,
+                        images=images,
+                        return_tensors="pt",
+                        padding=True,
+                        padding_side="left",
+                        add_special_tokens=False,
+                    )
+                    prompt_inputs = prompt_inputs.to(accelerator.device)
+                    prompt_ids, prompt_mask = prompt_inputs["input_ids"], prompt_inputs["attention_mask"]
+
+                    prompt_inputs["input_ids"] = processor.assign_to_global_vrt_id(prompt_inputs["input_ids"], prompt_inputs['image_grid_thw'])
+                    generate_returned_result = unwrapped_model.generate(
+                        **prompt_inputs, 
+                        use_cache=True, max_new_tokens=1024, do_sample=False, output_hidden_states=True, return_dict_in_generate=True, synced_gpus=False
+                    )
+                    prompt_length = prompt_ids.size(1)
+                    prompt_completion_ids = processor.assign_to_local_vrt_id(generate_returned_result['sequences'], prompt_inputs['image_grid_thw'])
+                    completion_ids = prompt_completion_ids[:, prompt_length:]
+                    completions, feats, labels, vrts, vrts_feats = parseVRTintoCompletion(processor, completion_ids, generate_returned_result['hidden_states'], torch.Tensor([False] * batch_size))
+
+                    low_res_image_embeds = generate_returned_result.past_image_embeds
+                    high_res_image_embeds = generate_returned_result.past_high_res_image_embeds
+                    visual_pe = generate_returned_result.past_visual_pe
+                    
+                    decoded_list = unwrapped_model.vl_decode(feats, low_res_image_embeds, high_res_image_embeds, prompt_inputs['image_grid_thw'], visual_pe)
+        
+        if idx < len(dataset):
+            with open(os.path.join(output_dir, f'{datasetname}_{accelerator.process_index}_pred_comp_{suffix}.json'), 'a+') as f:
+                for idx, completion in enumerate(completions):
+                    f.write(json.dumps({'image_id': input_['id'][idx], 'completion': completion.replace('<|endoftext|>', '').replace('<|im_end|>', '')}) + '\n')
+
+            if decoded_list['pred_boxes'].shape[0] == 0:
+                continue
+            pred_bboxes = []
+            with open(os.path.join(output_dir, f'{datasetname}_{accelerator.process_index}_pred_results_{suffix}.json'), 'a+') as f:
+                for box, score, label, mask, mask_hw, sample_idx in zip(decoded_list['pred_boxes'], decoded_list['pred_score'].sigmoid(), sum(labels, []), decoded_list['pred_mask'], torch.stack([decoded_list['pred_mask_valid_hw'][0], decoded_list['pred_mask_valid_hw'][1]], dim=-1), decoded_list['sample_idx']):
+                    eval_box = (max(box[0].item() - box[2].item() / 2, 0), max(box[1].item() - box[3].item() / 2, 0), min(box[2].item(), 1), min(box[3].item(), 1))
+                    w, h = images[sample_idx].size
+                    eval_box = (round(eval_box[0] * w), round(eval_box[1] * h), round(eval_box[2] * w), round(eval_box[3] * h))
+
+                    mask = torch.nn.functional.interpolate(mask[None, None, :mask_hw[0] * 4, :mask_hw[1] * 4], size=(h, w), mode='bilinear')[0, 0].sigmoid() > 0.5
+                    mask = mask.cpu().numpy().astype(np.uint8)
+                    rle = cocomask.encode(np.asfortranarray(mask))
+                    rle['counts'] = rle['counts'].decode()
+                    f.write(json.dumps({'image_id': input_['id'][sample_idx], 'score': score.item(), 'category': label, 'bbox': eval_box, 'mask': rle}) + '\n')
+        

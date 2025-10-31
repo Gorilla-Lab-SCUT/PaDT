@@ -35,17 +35,18 @@ if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
         checkpoint = sys.argv[1]
-        suffix = sys.argv[2]
+        split = sys.argv[2]
+        suffix = sys.argv[3]
     else:
         checkpoint = 'PaDT-MLLM/PaDT_Pro_3B'
+        split = 'refcoco_val'
         suffix = 'padt_pro_3b'
 
-
     model_path = f'{checkpoint}'  # Add the path to the model
-    data_files = ['PaDT-MLLM/COCO/instances_val2017.json']  # Add the data root
-    image_folders = ['../../dataset/coco/val2017']  # Add the image root
+    data_files = [f'PaDT-MLLM/RefCOCO/{split}.json']  # Add the data root
+    image_folders = ['../../dataset/coco/train2014']  # Add the image root
     assert len(data_files) == len(image_folders), "Number of data files must match number of image folders"
-    output_dir = '../outputs/coco'  # Add the output directory, default is logs
+    output_dir = '../outputs/refcoco'  # Add the output directory, default is logs
     
     all_data = []
     for data_file, image_folder in zip(data_files, image_folders):
@@ -109,7 +110,7 @@ if __name__ == "__main__":
         processor=processor,
         accelerator=accelerator,
         output_dir=output_dir,
-        batch_size=16,
-        datasetname='coco',
+        batch_size=32,
+        datasetname=split,
         suffix=suffix
     )
